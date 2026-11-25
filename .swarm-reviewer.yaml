@@ -1,0 +1,25 @@
+# unity-swarm-reviewer repo override, read at the PR head and merged over the
+# central profile. Only `boot` settings are allowed here. This `checks` list
+# replaces the central one as a whole.
+boot:
+  compose_file: docker-compose.yml
+  checks:
+    - name: unit-tests
+      service: tests
+      argv: ["dotnet", "test", "example-dotnet.slnx", "--no-restore"]
+      timeout: 4m
+    - name: lint
+      service: tests
+      argv: ["./scripts/lint.sh"]
+      timeout: 4m
+    - name: health
+      service: api
+      probe: { port: 8080, path: /health, expect_status: 200, expect_body: ok }
+    # Exercises both Postgres and Redis through the API.
+    - name: items-count
+      service: api
+      probe: { port: 8080, path: /items/count, expect_status: 200 }
+    - name: items-page
+      service: api
+      visit: { port: 8080, path: /items }
+      timeout: 60s
