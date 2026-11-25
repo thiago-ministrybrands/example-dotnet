@@ -7,7 +7,7 @@ application.
 ## Run the infrastructure
 
 ```sh
-docker compose up -d
+docker compose up -d postgres redis
 ```
 
 Starts Postgres on `5432` and Redis on `6379` with credentials matching
@@ -44,3 +44,20 @@ Unit tests cover `ItemService` using EF Core's in-memory provider and a mocked
 Runs `dotnet format --verify-no-changes` plus an analyzer-enforced build
 (`Directory.Build.props` turns on `EnableNETAnalyzers` / code-style
 enforcement).
+
+## unity-swarm-reviewer
+
+- `Dockerfile` / `docker-compose.yml`: the full stack (Postgres, Redis, the
+  API on `8080`, and an idle `tests` toolchain container). The reviewer's
+  Sandbox Runner boots it with `docker compose up --wait`.
+- `.swarm-reviewer.yaml`: the Functional-Verifier's checks (unit tests, lint,
+  HTTP probes and a page visit), read from the PR head.
+- `openspec/specs/`: the spec corpus the Spec-Compliance reviewer checks PRs against.
+
+Try it locally:
+
+```sh
+docker compose up --build --wait
+docker compose exec tests dotnet test example-dotnet.slnx --no-restore
+curl http://localhost:8080/health
+```
