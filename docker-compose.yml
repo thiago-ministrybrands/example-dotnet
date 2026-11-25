@@ -25,5 +25,32 @@ services:
       timeout: 5s
       retries: 10
 
+  api:
+    build:
+      context: .
+      target: api
+    environment:
+      ConnectionStrings__Postgres: "Host=postgres;Port=5432;Database=exampledb;Username=exampledb;Password=exampledb"
+      ConnectionStrings__Redis: "redis:6379"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/health"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  # Idle toolchain container (SDK, restored packages, source) that the
+  # reviewer's verification checks exec into for tests and lint.
+  tests:
+    build:
+      context: .
+      target: test
+
 volumes:
   postgres_data:
